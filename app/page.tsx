@@ -14,11 +14,14 @@ async function getBiens(): Promise<Bien[]> {
 }
 
 async function getReservations(): Promise<Reservation[]> {
-  const today = new Date().toISOString().split('T')[0]
+  const today = new Date()
+  const in7days = new Date(today)
+  in7days.setDate(in7days.getDate() + 14)
   const { data } = await supabase
     .from('reservations')
     .select('*')
-    .gte('date_depart', today)
+    .gte('date_depart', today.toISOString().split('T')[0])
+    .lte('date_arrivee', in7days.toISOString().split('T')[0])
     .order('date_arrivee')
   return data ?? []
 }

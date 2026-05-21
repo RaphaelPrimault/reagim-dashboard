@@ -8,6 +8,7 @@ import { STATUT_CONFIG } from '@/lib/utils'
 import { Header } from './Header'
 import { StatCard } from './StatCard'
 import { StatusBadge } from './StatusBadge'
+import { WeekCalendar } from './WeekCalendar'
 import { Home, Building2, CalendarClock, Users } from 'lucide-react'
 
 const Map = dynamic(() => import('./Map'), { ssr: false })
@@ -112,6 +113,9 @@ export function Dashboard({ initialBiens, initialReservations }: Props) {
             )}
           </div>
         </div>
+
+        {/* Calendrier semaine */}
+        <WeekCalendar biens={biensFiltres} reservations={initialReservations} />
 
         {/* Contenu principal : carte + liste */}
         <div className="flex flex-col lg:flex-row gap-5 flex-1 min-h-0">
