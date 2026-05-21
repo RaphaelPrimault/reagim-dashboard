@@ -2,6 +2,9 @@ import { supabase } from '@/lib/supabase'
 import { Dashboard } from '@/components/Dashboard'
 import { Bien, Reservation } from '@/lib/types'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 async function getBiens(): Promise<Bien[]> {
   const { data } = await supabase
     .from('biens')
