@@ -122,7 +122,7 @@ export function Dashboard({ initialBiens, initialReservations }: Props) {
           </div>
 
           {/* Sidebar liste */}
-          <div className="lg:w-80 xl:w-96 flex flex-col gap-3 overflow-y-auto max-h-[600px] lg:max-h-none">
+          <div className="lg:w-80 xl:w-96 flex flex-col gap-3 lg:overflow-y-auto">
             {selectedBien && (
               <div className="bg-reagim-blue text-white rounded-xl p-4 shadow-md">
                 <div className="flex justify-between items-start mb-2">
