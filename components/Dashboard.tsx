@@ -86,7 +86,7 @@ export function Dashboard({ initialBiens, initialReservations }: Props) {
 
           <div className="flex gap-2 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap pb-1">
             {(Object.entries(STATUT_CONFIG) as [Statut, typeof STATUT_CONFIG[Statut]][]).map(([key, cfg]) => {
-              const count = biens.filter(b => b.statut === key).length
+              const count = biensEnrichis.filter(b => b.statut === key).length
               const isActive = filtre === key
               return (
                 <button
@@ -171,7 +171,7 @@ export function Dashboard({ initialBiens, initialReservations }: Props) {
               <p className="text-sm font-semibold text-reagim-text mb-3">Répartition par statut</p>
               <div className="space-y-2">
                 {(Object.entries(STATUT_CONFIG) as [Statut, typeof STATUT_CONFIG[Statut]][]).map(([key, cfg]) => {
-                  const count = biens.filter(b => b.statut === key).length
+                  const count = biensEnrichis.filter(b => b.statut === key).length
                   const pct = stats.total > 0 ? (count / stats.total) * 100 : 0
                   return (
                     <div key={key}>
