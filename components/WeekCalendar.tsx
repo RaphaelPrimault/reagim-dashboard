@@ -55,6 +55,15 @@ export function WeekCalendar({ biens, reservations }: Props) {
       return { type: 'checkout' as const, client: checkout.client_nom }
     }
 
+    // Statut manuel actif aujourd'hui (nettoyage/maintenance saisis par l'aubergiste)
+    const isToday = isSameDay(day, new Date())
+    if (isToday && bien.statut === 'nettoyage') {
+      return { type: 'checkout' as const, client: 'Ménage en cours' }
+    }
+    if (isToday && bien.statut === 'maintenance') {
+      return { type: 'maintenance' as const }
+    }
+
     return { type: 'free' as const }
   }
 
@@ -124,6 +133,14 @@ export function WeekCalendar({ biens, reservations }: Props) {
                           title={`Départ ${cell.client} — ménage à faire`}
                         >
                           Ménage
+                        </div>
+                      )}
+                      {cell.type === 'maintenance' && (
+                        <div
+                          className="bg-gray-100 border-l-2 border-gray-500 rounded px-1.5 py-1 text-[10px] text-gray-700 truncate font-medium"
+                          title="Bien en maintenance"
+                        >
+                          Maint.
                         </div>
                       )}
                       {cell.type === 'free' && (
