@@ -70,48 +70,54 @@ export function Dashboard({ initialBiens, initialReservations }: Props) {
         </div>
 
         {/* Filtres cliquables */}
-        <div className="flex flex-wrap gap-2 items-center">
-          <span className="text-sm text-gray-500 font-medium mr-1">Filtrer :</span>
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-gray-500 font-medium">Filtrer par statut</span>
+            <span className="text-xs text-gray-400 italic flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+              Temps réel
+            </span>
+          </div>
 
-          {(Object.entries(STATUT_CONFIG) as [Statut, typeof STATUT_CONFIG[Statut]][]).map(([key, cfg]) => {
-            const count = biens.filter(b => b.statut === key).length
-            const isActive = filtre === key
-            return (
+          <div className="flex gap-2 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap pb-1">
+            {(Object.entries(STATUT_CONFIG) as [Statut, typeof STATUT_CONFIG[Statut]][]).map(([key, cfg]) => {
+              const count = biens.filter(b => b.statut === key).length
+              const isActive = filtre === key
+              return (
+                <button
+                  key={key}
+                  onClick={() => toggleFiltre(key)}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium border transition-all shrink-0
+                    ${isActive
+                      ? `${cfg.bg} ${cfg.color} border-current shadow-sm scale-105`
+                      : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300 hover:text-gray-700'
+                    }`}
+                >
+                  <span className="w-2 h-2 rounded-full" style={{ background: cfg.pin }} />
+                  {cfg.label}
+                  <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${isActive ? 'bg-white/60' : 'bg-gray-100'}`}>
+                    {count}
+                  </span>
+                </button>
+              )
+            })}
+
+            {filtre && (
               <button
-                key={key}
-                onClick={() => toggleFiltre(key)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium border transition-all
-                  ${isActive
-                    ? `${cfg.bg} ${cfg.color} border-current shadow-sm scale-105`
-                    : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300 hover:text-gray-700'
-                  }`}
+                onClick={() => setFiltre(null)}
+                className="text-xs text-gray-400 hover:text-gray-600 underline shrink-0 self-center ml-1"
               >
-                <span className="w-2 h-2 rounded-full" style={{ background: cfg.pin }} />
-                {cfg.label}
-                <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${isActive ? 'bg-white/60' : 'bg-gray-100'}`}>
-                  {count}
-                </span>
+                Tout afficher
               </button>
-            )
-          })}
-
-          {filtre && (
-            <button
-              onClick={() => setFiltre(null)}
-              className="ml-1 text-xs text-gray-400 hover:text-gray-600 underline"
-            >
-              Tout afficher
-            </button>
-          )}
-
-          <span className="ml-auto text-xs text-gray-400 italic">Mise à jour en temps réel</span>
+            )}
+          </div>
         </div>
 
         {/* Contenu principal : carte + liste */}
         <div className="flex flex-col lg:flex-row gap-5 flex-1 min-h-0">
 
           {/* Carte */}
-          <div className="flex-1 min-h-[420px] lg:min-h-0 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="h-[55vh] min-h-[400px] lg:h-auto lg:flex-1 lg:min-h-0 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <Map biens={biensFiltres} selectedId={selected} onSelect={setSelected} />
           </div>
 
