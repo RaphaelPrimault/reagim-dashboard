@@ -3,12 +3,12 @@
 import dynamic from 'next/dynamic'
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Bien, Reservation, StatsDashboard } from '@/lib/types'
+import { Bien, Reservation, Statut, StatsDashboard } from '@/lib/types'
 import { STATUT_CONFIG } from '@/lib/utils'
 import { Header } from './Header'
 import { StatCard } from './StatCard'
 import { StatusBadge } from './StatusBadge'
-import { Home, Building2, CheckCircle2, AlertCircle, CalendarClock, Users } from 'lucide-react'
+import { Home, Building2, CalendarClock, Users } from 'lucide-react'
 
 const Map = dynamic(() => import('./Map'), { ssr: false })
 
@@ -30,6 +30,7 @@ interface Props {
 export function Dashboard({ initialBiens, initialReservations }: Props) {
   const [biens, setBiens] = useState<Bien[]>(initialBiens)
   const [selected, setSelected] = useState<string | null>(null)
+  const [filtre, setFiltre] = useState<Statut | null>(null)
   const today = new Date().toISOString().split('T')[0]
 
   const checkinsAujourdhui = initialReservations.filter(r => r.date_arrivee === today)
@@ -42,12 +43,17 @@ export function Dashboard({ initialBiens, initialReservations }: Props) {
         setBiens(prev => prev.map(b => b.id === payload.new.id ? { ...b, ...payload.new } : b))
       })
       .subscribe()
-
     return () => { supabase.removeChannel(channel) }
   }, [])
 
   const stats = computeStats(biens)
+  const biensFiltres = filtre ? biens.filter(b => b.statut === filtre) : biens
   const selectedBien = biens.find(b => b.id === selected)
+
+  function toggleFiltre(statut: Statut) {
+    setFiltre(prev => prev === statut ? null : statut)
+    setSelected(null)
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -63,15 +69,41 @@ export function Dashboard({ initialBiens, initialReservations }: Props) {
           <StatCard label="Check-outs aujourd'hui" value={checkoutsAujourdhui.length} icon={Users} color="text-amber-600" />
         </div>
 
-        {/* Légende */}
-        <div className="flex flex-wrap gap-3 items-center">
-          <span className="text-sm text-gray-500 font-medium">Statuts :</span>
-          {(Object.entries(STATUT_CONFIG) as [string, typeof STATUT_CONFIG[keyof typeof STATUT_CONFIG]][]).map(([key, cfg]) => (
-            <span key={key} className="flex items-center gap-1.5 text-xs text-gray-600">
-              <span className="w-3 h-3 rounded-full inline-block" style={{ background: cfg.pin }} />
-              {cfg.label}
-            </span>
-          ))}
+        {/* Filtres cliquables */}
+        <div className="flex flex-wrap gap-2 items-center">
+          <span className="text-sm text-gray-500 font-medium mr-1">Filtrer :</span>
+
+          {(Object.entries(STATUT_CONFIG) as [Statut, typeof STATUT_CONFIG[Statut]][]).map(([key, cfg]) => {
+            const count = biens.filter(b => b.statut === key).length
+            const isActive = filtre === key
+            return (
+              <button
+                key={key}
+                onClick={() => toggleFiltre(key)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium border transition-all
+                  ${isActive
+                    ? `${cfg.bg} ${cfg.color} border-current shadow-sm scale-105`
+                    : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300 hover:text-gray-700'
+                  }`}
+              >
+                <span className="w-2 h-2 rounded-full" style={{ background: cfg.pin }} />
+                {cfg.label}
+                <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${isActive ? 'bg-white/60' : 'bg-gray-100'}`}>
+                  {count}
+                </span>
+              </button>
+            )
+          })}
+
+          {filtre && (
+            <button
+              onClick={() => setFiltre(null)}
+              className="ml-1 text-xs text-gray-400 hover:text-gray-600 underline"
+            >
+              Tout afficher
+            </button>
+          )}
+
           <span className="ml-auto text-xs text-gray-400 italic">Mise à jour en temps réel</span>
         </div>
 
@@ -80,7 +112,7 @@ export function Dashboard({ initialBiens, initialReservations }: Props) {
 
           {/* Carte */}
           <div className="flex-1 min-h-[420px] lg:min-h-0 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <Map biens={biens} selectedId={selected} onSelect={setSelected} />
+            <Map biens={biensFiltres} selectedId={selected} onSelect={setSelected} />
           </div>
 
           {/* Sidebar liste */}
@@ -119,7 +151,7 @@ export function Dashboard({ initialBiens, initialReservations }: Props) {
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
               <p className="text-sm font-semibold text-reagim-text mb-3">Répartition par statut</p>
               <div className="space-y-2">
-                {(Object.entries(STATUT_CONFIG) as [string, typeof STATUT_CONFIG[keyof typeof STATUT_CONFIG]][]).map(([key, cfg]) => {
+                {(Object.entries(STATUT_CONFIG) as [Statut, typeof STATUT_CONFIG[Statut]][]).map(([key, cfg]) => {
                   const count = biens.filter(b => b.statut === key).length
                   const pct = stats.total > 0 ? (count / stats.total) * 100 : 0
                   return (
@@ -137,13 +169,16 @@ export function Dashboard({ initialBiens, initialReservations }: Props) {
               </div>
             </div>
 
-            {/* Liste biens */}
+            {/* Liste biens filtrés */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-              <div className="p-4 border-b border-gray-100">
-                <p className="text-sm font-semibold text-reagim-text">Tous les biens</p>
+              <div className="p-4 border-b border-gray-100 flex justify-between items-center">
+                <p className="text-sm font-semibold text-reagim-text">
+                  {filtre ? STATUT_CONFIG[filtre].label : 'Tous les biens'}
+                </p>
+                <span className="text-xs text-gray-400">{biensFiltres.length} bien{biensFiltres.length > 1 ? 's' : ''}</span>
               </div>
               <div className="divide-y divide-gray-50">
-                {biens.map(bien => (
+                {biensFiltres.map(bien => (
                   <button
                     key={bien.id}
                     onClick={() => setSelected(bien.id === selected ? null : bien.id)}
@@ -158,6 +193,9 @@ export function Dashboard({ initialBiens, initialReservations }: Props) {
                     </div>
                   </button>
                 ))}
+                {biensFiltres.length === 0 && (
+                  <p className="px-4 py-6 text-sm text-gray-400 text-center">Aucun bien dans ce statut</p>
+                )}
               </div>
             </div>
           </div>
