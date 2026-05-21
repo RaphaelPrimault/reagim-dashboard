@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic'
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Bien, Reservation, Statut, StatsDashboard } from '@/lib/types'
-import { STATUT_CONFIG } from '@/lib/utils'
+import { STATUT_CONFIG, getStatutEffectif } from '@/lib/utils'
 import { Header } from './Header'
 import { StatCard } from './StatCard'
 import { StatusBadge } from './StatusBadge'
@@ -47,9 +47,13 @@ export function Dashboard({ initialBiens, initialReservations }: Props) {
     return () => { supabase.removeChannel(channel) }
   }, [])
 
-  const stats = computeStats(biens)
-  const biensFiltres = filtre ? biens.filter(b => b.statut === filtre) : biens
-  const selectedBien = biens.find(b => b.id === selected)
+  const biensEnrichis = biens.map(b => {
+    const effectif = getStatutEffectif(b, initialReservations)
+    return { ...b, statut: effectif.statut, _source: effectif.source, _message: effectif.message }
+  })
+  const stats = computeStats(biensEnrichis)
+  const biensFiltres = filtre ? biensEnrichis.filter(b => b.statut === filtre) : biensEnrichis
+  const selectedBien = biensEnrichis.find(b => b.id === selected)
 
   function toggleFiltre(statut: Statut) {
     setFiltre(prev => prev === statut ? null : statut)
@@ -135,6 +139,11 @@ export function Dashboard({ initialBiens, initialReservations }: Props) {
                 </div>
                 <p className="text-white/70 text-sm mb-3">{selectedBien.adresse}, {selectedBien.commune}</p>
                 <StatusBadge statut={selectedBien.statut} />
+                {selectedBien._message && (
+                  <p className="mt-2 text-xs text-white/80 italic">
+                    {selectedBien._source !== 'manuel' && '⚡ '}{selectedBien._message}
+                  </p>
+                )}
                 <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
                   <div className="bg-white/10 rounded-lg p-2">
                     <p className="text-white/60 text-xs">Type</p>
