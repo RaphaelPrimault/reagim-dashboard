@@ -17,6 +17,37 @@ export function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
 }
 
+export function formatEuros(montant: number) {
+  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(montant)
+}
+
+export function calculerRevenuDuMois(biens: Bien[], reservations: Reservation[]): { total: number; nbReservations: number } {
+  const now = new Date()
+  const debutMois = new Date(now.getFullYear(), now.getMonth(), 1)
+  const finMois = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+
+  let total = 0
+  const ids = new Set<string>()
+
+  for (const res of reservations) {
+    const bien = biens.find(b => b.id === res.bien_id)
+    if (!bien?.prix_semaine) continue
+
+    const arrivee = new Date(res.date_arrivee)
+    const depart = new Date(res.date_depart)
+    const debut = arrivee > debutMois ? arrivee : debutMois
+    const fin = depart < finMois ? depart : finMois
+    if (debut >= fin) continue
+
+    const jours = Math.ceil((fin.getTime() - debut.getTime()) / 86400000)
+    const prixJour = bien.prix_semaine / 7
+    total += jours * prixJour
+    ids.add(res.id)
+  }
+
+  return { total: Math.round(total), nbReservations: ids.size }
+}
+
 function startOfDay(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate())
 }

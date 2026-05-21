@@ -27,12 +27,19 @@ function createPinIcon(statut: Statut) {
   })
 }
 
+const ILE_DE_RE_BOUNDS: L.LatLngBoundsLiteral = [
+  [46.12, -1.62],
+  [46.28, -1.16],
+]
+
 function MapRecenter({ biens }: { biens: Bien[] }) {
   const map = useMap()
   useEffect(() => {
     if (biens.length > 0) {
       const bounds = L.latLngBounds(biens.map(b => [b.latitude, b.longitude]))
-      map.fitBounds(bounds, { padding: [40, 40] })
+      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 13 })
+    } else {
+      map.fitBounds(ILE_DE_RE_BOUNDS, { padding: [20, 20] })
     }
   }, [biens, map])
   return null
@@ -49,12 +56,17 @@ export default function Map({ biens, selectedId, onSelect }: Props) {
     <MapContainer
       center={[46.195, -1.43]}
       zoom={12}
+      minZoom={11}
+      maxZoom={18}
+      maxBounds={ILE_DE_RE_BOUNDS}
+      maxBoundsViscosity={1.0}
       scrollWheelZoom
       style={{ height: '100%', width: '100%', borderRadius: '0.75rem' }}
     >
       <TileLayer
-        attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · © <a href="https://carto.com/attributions">CARTO</a>'
+        url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+        subdomains={['a', 'b', 'c', 'd']}
       />
       <MapRecenter biens={biens} />
       {biens.map((bien) => (

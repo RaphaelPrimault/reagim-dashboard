@@ -4,12 +4,12 @@ import dynamic from 'next/dynamic'
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Bien, Reservation, Statut, StatsDashboard } from '@/lib/types'
-import { STATUT_CONFIG, getStatutEffectif } from '@/lib/utils'
+import { STATUT_CONFIG, getStatutEffectif, calculerRevenuDuMois, formatEuros } from '@/lib/utils'
 import { Header } from './Header'
 import { StatCard } from './StatCard'
 import { StatusBadge } from './StatusBadge'
 import { WeekCalendar } from './WeekCalendar'
-import { Home, Building2, CalendarClock, Users } from 'lucide-react'
+import { Home, Building2, CalendarClock, Euro } from 'lucide-react'
 
 const Map = dynamic(() => import('./Map'), { ssr: false })
 
@@ -52,6 +52,8 @@ export function Dashboard({ initialBiens, initialReservations }: Props) {
     return { ...b, statut: effectif.statut, _source: effectif.source, _message: effectif.message }
   })
   const stats = computeStats(biensEnrichis)
+  const revenu = calculerRevenuDuMois(biens, initialReservations)
+  const moisCourant = new Date().toLocaleDateString('fr-FR', { month: 'long' })
   const biensFiltres = filtre ? biensEnrichis.filter(b => b.statut === filtre) : biensEnrichis
   const selectedBien = biensEnrichis.find(b => b.id === selected)
 
@@ -71,7 +73,13 @@ export function Dashboard({ initialBiens, initialReservations }: Props) {
           <StatCard label="Biens total" value={stats.total} icon={Home} color="text-reagim-blue" />
           <StatCard label="Taux d'occupation" value={`${stats.tauxOccupation}%`} icon={Building2} color="text-indigo-600" />
           <StatCard label="Check-ins aujourd'hui" value={checkinsAujourdhui.length} icon={CalendarClock} color="text-green-600" />
-          <StatCard label="Check-outs aujourd'hui" value={checkoutsAujourdhui.length} icon={Users} color="text-amber-600" />
+          <StatCard
+            label={`Revenu ${moisCourant}`}
+            value={formatEuros(revenu.total)}
+            icon={Euro}
+            color="text-reagim-gold"
+            subtitle={`${revenu.nbReservations} réservation${revenu.nbReservations > 1 ? 's' : ''}`}
+          />
         </div>
 
         {/* Filtres cliquables */}
