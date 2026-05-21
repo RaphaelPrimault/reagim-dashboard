@@ -58,16 +58,20 @@ export function getStatutEffectif(bien: Bien, reservations: Reservation[]): Stat
     return { statut: 'nettoyage', source: 'manuel', message: 'Ménage en cours' }
   }
 
-  const checkoutToday = reservations.find(r =>
-    r.bien_id === bien.id && isSameDay(today, startOfDay(new Date(r.date_depart)))
-  )
+  // Bien marqué "occupe" mais sans réservation active aujourd'hui
+  // → la réservation est terminée, ménage requis tant que l'aubergiste n'a pas validé
+  if (bien.statut === 'occupe') {
+    const lastCheckout = reservations
+      .filter(r => r.bien_id === bien.id && new Date(r.date_depart) <= new Date())
+      .sort((a, b) => new Date(b.date_depart).getTime() - new Date(a.date_depart).getTime())[0]
 
-  if (checkoutToday && new Date(bien.updated_at) < startOfDay(new Date())) {
     return {
       statut: 'nettoyage',
       source: 'auto-nettoyage',
-      reservation: checkoutToday,
-      message: `Ménage requis — départ de ${checkoutToday.client_nom} ce matin`,
+      reservation: lastCheckout,
+      message: lastCheckout
+        ? `Ménage requis — départ de ${lastCheckout.client_nom}`
+        : 'Ménage requis',
     }
   }
 
